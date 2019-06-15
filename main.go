@@ -19,21 +19,21 @@ type User struct {
 	Action string `json:"action"`
 }
 
-type Message struct {
-	Message   string `json:"message"`
-}
-
 type Request struct {
 	User *User 			`json:"user"`
-	Message *Message `json:"message"`
+	Message string `json:"message"`
 }
 
-
+type Response struct {
+	User string 			`json:"user"`
+	Message string `json:"message"`
+	Client *websocket.Conn `json:"-"`
+}
 
 var (
 	entering = make (chan *websocket.Conn)
 	leaving = make (chan *websocket.Conn)
-	messages = make (chan string)
+	messages = make (chan Response)
 )
 
 func handleHome(w http.ResponseWriter, r *http.Request) {
@@ -48,7 +48,7 @@ func handleWebSocket(w http.ResponseWriter, r *http.Request) {
 	// upgrade this connection to a WebSocket Connection
 	ws, err := upgrader.Upgrade(w, r, nil)
 	if err != nil {
-		log.Println(err)
+		log.Println("Upgrader Error: ", err)
 	}
 	log.Println("Client Connected")
 	entering<- ws
@@ -60,14 +60,15 @@ func clientWriter(conn *websocket.Conn) {
 		messageType, p, err := conn.ReadMessage()
 		Request := &Request{
 			User: &User{},
-			Message: &Message{},
+			Message: "",
 		}
-		fmt.Printf("\rMessage Type: %d, Message String: %s\n", messageType, string(p))
 		if(messageType == -1) {
+			leaving <- conn
 			break
 		}
 		if err != nil {
 			log.Println("Error conn.ReadMessage: ", err)
+			leaving <- conn
 			break
 		}
 		err = json.Unmarshal(p, Request)
@@ -75,14 +76,18 @@ func clientWriter(conn *websocket.Conn) {
 			log.Println("Error JSON.Unmarshal",err, p, Request)
 			break
 		}
-
+		resp := Response{
+			User: Request.User.User,
+			Message: Request.Message,
+			Client: conn,
+		}
 		switch Request.User.Action {
 		case "Enter Room":
-			messages<- Request.Message.Message
+			messages<- resp
 		case "Message":
-			messages<- Request.Message.Message
+			messages<- resp
 		case "Leave Room":
-			messages<- Request.Message.Message
+			messages<- resp
 		}
 	}
 }
@@ -93,6 +98,7 @@ func setupRoutes() {
 }
 
 func main() {
+	log.SetFlags(log.LstdFlags | log.Lshortfile)
 	setupRoutes()
 	fmt.Println("Go Websockets")
 	go broadcaster()
@@ -104,11 +110,19 @@ func broadcaster() {
 	var clients = make(map[*websocket.Conn]bool)
 	for {
 		select {
-		case msg := <-messages:
+		case resp := <-messages:
 				for cli := range clients {
-					 if err := cli.WriteMessage(1, []byte(msg)); err!=nil{
-						 log.Println(err)
-					 }
+					if (resp.Client != cli) {
+						byteResp, err := json.Marshal(resp);
+						if err != nil {
+							log.Println(err)
+							continue
+						}
+						if err := cli.WriteMessage(1, byteResp); err!=nil{
+							log.Println(err)
+						}
+					}
+
 				}
 		case cli := <-entering:
 				clients[cli] = true

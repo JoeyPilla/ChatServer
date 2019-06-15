@@ -19,9 +19,7 @@ function App() {
             user: user,
             action: "Enter Room"
           },
-          message: {
-            message: user+" has joined the chat"
-          }
+            message: user + " has joined the chat"
         }));
     }
 
@@ -33,21 +31,15 @@ function App() {
               user: user,
               action: "Leave Room"
             },
-            message: {
-              message: user+ " has left the chat"
-            }
+            message: user + " has left the chat"
           }));
       }
     } 
-  }, [inRoom, , user]);
-
-  useEffect(() => {
-    socket.onmessage = () => (msg => {
-      console.log(msg);
-    });
-
-    document.title = `${messageCount} new messages have been emitted`;
-  }, [messageCount]); //only re-run the effect if new message comes in
+   }, [inRoom, , user]);
+  
+   socket.onmessage = function(event) {
+    console.log(JSON.parse(event.data));
+  };
 
   const handleInRoom = () => {
     inRoom
@@ -62,9 +54,7 @@ function App() {
           user: user,
           action: "Message"
         },
-        message: {
           message: message
-        }
       }));
     setMessageCount(messageCount + 1);
   }
