@@ -15,8 +15,13 @@ function App() {
       console.log('joining room');
       socket.send(JSON.stringify(
         {
-          user: user,
-          action: "Enter Room"
+          user: {
+            user: user,
+            action: "Enter Room"
+          },
+          message: {
+            message: user+" has joined the chat"
+          }
         }));
     }
 
@@ -24,16 +29,21 @@ function App() {
       if(inRoom) {
         socket.send(JSON.stringify(
           {
-            user: user,
-            action: "Leave Room"
+            user: {
+              user: user,
+              action: "Leave Room"
+            },
+            message: {
+              message: user+ " has left the chat"
+            }
           }));
       }
     } 
-  }, [inRoom, user]);
+  }, [inRoom, , user]);
 
   useEffect(() => {
-    socket.onmessage = () => ( msg => {
-      setMessageCount(messageCount + 1);
+    socket.onmessage = () => (msg => {
+      console.log(msg);
     });
 
     document.title = `${messageCount} new messages have been emitted`;
@@ -46,16 +56,27 @@ function App() {
   }
 
   const handleNewMessage = () => {
-    socket.send(JSON.stringify({message: message}));
+    socket.send(JSON.stringify(
+      {
+        user: {
+          user: user,
+          action: "Message"
+        },
+        message: {
+          message: message
+        }
+      }));
     setMessageCount(messageCount + 1);
   }
   return (
     <div>
       <h1>
-          {inRoom && `Inside Room` }
-          {!inRoom && `Outside Room` }
-        </h1>
-        
+        {inRoom && `Inside Room`}
+        {!inRoom && `Outside Room` }
+      </h1>
+      <h4>
+      {inRoom && user}
+      </h4>  
       {!inRoom &&
               <input
               type="text"
