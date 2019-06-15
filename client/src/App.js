@@ -8,6 +8,7 @@ function App() {
   const [inRoom, setInRoom] = useState(false);
   const [message, setMessage] = useState('');
   const [user, setUser] = useState('');
+  const [prevUser, setPrevUser] = useState('')
   const [messages, setMessages] = useState([]);
    useEffect(() => {
     if(inRoom) {
@@ -36,8 +37,23 @@ function App() {
    }, [inRoom, , user]);
   
   socket.onmessage = function (event) {
-    let temp = JSON.parse(event.data)
-    setMessages([...messages, {...temp}])
+    let {user, message} = JSON.parse(event.data)
+
+    if (message.includes(user) || prevUser === user) {
+        setMessages([...messages,
+        <Right>
+          <Message>{message}</Message>
+        </Right>
+          ])
+    } else {
+        setPrevUser(user);
+        setMessages([...messages,
+        <Right>
+          <User>{user}</User>
+          <Message>{message}</Message>
+        </Right>
+        ])
+    }
   };
 
   const handleInRoom = () => {
@@ -55,30 +71,33 @@ function App() {
         },
           message: message
       }));
-    setMessages([...messages, {user, message}])
-  }
-  const retMessages = messages.map(resp => {
-    if (resp.user === user) {
-      return (
+    setMessages([...messages,
       <Left>
-        <User>{resp.user}</User><p>{resp.message}</p>
-      </Left>
-      )
-    } else if (resp.message.includes(resp.user)) {
-      return (
-      <Right>
-        <Message>{resp.message}</Message>
-      </Right>
-      )
-    } else {
-      return (
-        <Right>
-          <User>{resp.user}</User>
-          <Message>{resp.message}</Message>
-        </Right>
-      )
-    }
-  })
+        <SentMessage>{message}</SentMessage>
+      </Left>])
+  }
+  // const retMessages = messages.map(resp => {
+  //   if (resp.user === user) {
+  //     return (
+  //     <Left>
+  //       <SentMessage>{resp.message}</SentMessage>
+  //     </Left>
+  //     )
+  //   } else if (resp.message.includes(resp.user) || messages[messages.length -1].user === resp.user) {
+  //     return (
+  //     <Right>
+  //       <Message>{resp.message}</Message>
+  //     </Right>
+  //     )
+  //   } else {
+  //     return (
+  //       <Right>
+  //         <User>{resp.user}</User>
+  //         <Message>{resp.message}</Message>
+  //       </Right>
+  //     )
+  //   }
+  // })
 
   const keyPress = (e) => {
     if(e.keyCode === 13){
@@ -98,7 +117,7 @@ function App() {
         </h4>
       </div>
       <Container>
-          {retMessages}
+          {messages}
       </Container>
       <Footer>
         {!inRoom &&
@@ -162,14 +181,27 @@ const Container = styled.div`
   flex-direction: column;
   justify-self:center;
   width: 50%;
+  margin-bottom: 75px;
 `
 
 const User = styled.p`
   align-self: center;
+  display: inline-block;
+  word-wrap: break-word;
+  word-break: break-word;
 `
 
 const Message = styled.p`
+display: inline-block;
   align-self: flex-end;
+  word-wrap: break-word;
+  word-break: break-word;
+`
+const SentMessage = styled.p`
+display: inline-block;
+  align-self: flex-start;
+  word-wrap: break-word;
+  word-break: break-word;
 `
 
 const Left = styled.div`
