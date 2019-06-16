@@ -1,8 +1,26 @@
-import React, {useState, useEffect} from 'react';
+import React, {useState, useEffect, useRef} from 'react';
 import styled from 'styled-components';
 import './App.css';
 
 let socket = new WebSocket("ws://localhost:8080/ws");
+
+
+const Messages = ( {messages} ) => {
+  const messagesEndRef = useRef(null);
+  const scrollToBottom = () => {
+    messagesEndRef.current.scrollIntoView({ behavior: "smooth" });
+  };
+  useEffect(scrollToBottom, [messages]);
+  return (
+    <Container>
+      {messages}
+      <div ref={messagesEndRef} />
+    </Container>
+  );
+};
+
+
+
 
 function App() {
   const [inRoom, setInRoom] = useState(false);
@@ -38,8 +56,7 @@ function App() {
   
   socket.onmessage = function (event) {
     let {user, message} = JSON.parse(event.data)
-
-    if (message.includes(user) || prevUser === user) {
+    if (message.includes(user + " has") || prevUser === user) {
         setMessages([...messages,
         <Right>
           <Message>{message}</Message>
@@ -76,35 +93,7 @@ function App() {
         <SentMessage>{message}</SentMessage>
       </Left>])
   }
-  // const retMessages = messages.map(resp => {
-  //   if (resp.user === user) {
-  //     return (
-  //     <Left>
-  //       <SentMessage>{resp.message}</SentMessage>
-  //     </Left>
-  //     )
-  //   } else if (resp.message.includes(resp.user) || messages[messages.length -1].user === resp.user) {
-  //     return (
-  //     <Right>
-  //       <Message>{resp.message}</Message>
-  //     </Right>
-  //     )
-  //   } else {
-  //     return (
-  //       <Right>
-  //         <User>{resp.user}</User>
-  //         <Message>{resp.message}</Message>
-  //       </Right>
-  //     )
-  //   }
-  // })
 
-  const keyPress = (e) => {
-    if(e.keyCode === 13){
-       console.log('value', e.target.value);
-       // put the login here
-    }
- }
   return (
     <Home>
       <div>
@@ -116,9 +105,7 @@ function App() {
           {inRoom && user}
         </h4>
       </div>
-      <Container>
-          {messages}
-      </Container>
+      <Messages messages={messages}/>
       <Footer>
         {!inRoom &&
           <input
