@@ -167,8 +167,9 @@ const Container = styled.div`
   display: flex;
   flex-direction: column;
   justify-self:center;
-  width: 50%;
+  width: 100%;
   margin-bottom: 75px;
+  max-width: 450px;
 `
 
 const User = styled.p`
@@ -183,19 +184,20 @@ display: inline-block;
   align-self: flex-end;
   word-wrap: break-word;
   word-break: break-word;
+  padding-right: 30px;
 `
 const SentMessage = styled.p`
 display: inline-block;
   align-self: flex-start;
   word-wrap: break-word;
   word-break: break-word;
+  padding-left: 30px;
 `
 
 const Left = styled.div`
   align-self: flex-start;
   display: flex;
   flex-direction: column;
-  background-color: red;
   width: 50%;
 `
 
@@ -204,7 +206,6 @@ const Right = styled.div`
   align-self: flex-end;
   flex-direction: column;
   width: 50%;
-  background-color: blue;
 `
 
 export default App;
